@@ -820,7 +820,16 @@ footer{background:linear-gradient(135deg,var(--purple),#0a0a1a);border-top:1px s
 
 <div class="toast" id="toast"></div>
 <script>
-const CATS_DATA=[
+// --- GITHUB API CONFIGURATION ---
+const GITHUB_CONFIG = {
+    owner: "shauryaokok", // e.g., shauryaokok
+    repo: "DEV-BHOJ",
+    path: "index.html",
+    token: "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" // Replace with your fine-grained token
+};
+
+// --- RAW DATA ARRAYS ---
+let CATS_DATA=[
   {name:"Paneer Dishes",icon:"🧀",img:"https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&q=80",items:[["Matar Paneer","250"],["Shahi Paneer","260"],["Kadhai Paneer","260"],["Handi Paneer","260"],["Paneer Do Pyaza","280"],["Paneer Lababdar","290"],["Paneer Butter Masala","290"],["Paneer Tikka Masala","320"],["Paneer Pasanda","310"],["Paneer Methi Malai","320"],["Paneer Dilruba","330"],["Rajasthani Paneer","280"],["Mughlai Paneer","280"],["Paneer Jaipuri","280"],["Veg Jaipuri","260"],["Paneer Kali Mirch","290"],["Palak Paneer","260"],["Paneer Bhuji","300"],["Paneer Jhel Fraji","280"],["Paneer Kaju Korma","320"],["Veg. Kofta","270"],["Anguri Kofta","300"],["Shahi Kofta","350"],["Malai Kofta","300"],["Palak Kofta","280"]]},
   {name:"Mix Dishes",icon:"🥘",img:"https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=800&q=80",items:[["Dal Fry","180"],["Dal Makhani","200"],["Dal Handi","230"],["Dal Maharani","250"],["Aloo Jeera","150"],["Dam Aloo","220"],["Kashmiri Dam Aloo","300"],["Aloo Achari","170"],["Chana Masala","220"],["Kadhai Chana","240"],["Pindi Chana","240"],["Mix Veg.","240"],["Kaju Korma","340"],["Veg. Navratan Korma","280"],["Veg. Jhel Fraji","250"],["Malai Chaap Dry","260"],["Malai Chaap Gravy","290"],["Chaap Butter Masala","260"],["Seasonal Veg.","240"]]},
   {name:"Mushroom Dishes",icon:"🍄",img:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",items:[["Mushroom Paneer","300"],["Mushroom Matar","260"],["Mushroom Do Pyaza","280"],["Mushroom Butter Masala","280"],["Mushroom Curry","300"],["Mushroom Jhel Fraji","290"]]},
@@ -844,18 +853,93 @@ const CATS_DATA=[
   {name:"Drinks",icon:"🍹",img:"https://images.unsplash.com/photo-1544145945-f90425340c7e?w=800&q=80",items:[["Cold Drinks","MRP+10"],["Energy Drinks","MRP"],["Water","20"],["Shikanji Soda","70"],["Shikanji Water","60"],["Lassi","100"],["Chhachh","60"]]},
   {name:"Ice Cream",icon:"🍦",img:"https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=800&q=80",items:[["Vanilla Ice Cream","30"],["Strawberry Ice Cream","50"],["Butterscotch Ice Cream","50"],["Chocolate Ice Cream","50"],["Kesar Pista Ice Cream","50"]]}
 ];
+
 const SPD=["Dev Bhoj Spl. Sizzler","Dev Bhoj Spl. Paneer","Dev Bhoj Spl. Korma"];
 const POP_DEF=["Paneer Butter Masala","Dal Makhani","Paneer Tikka","Dev Bhoj Spl. Sizzler","Chilli Paneer (Dry)","Paneer Biryani","Cold Coffee with Ice Cream","Butter Naan","Manchurian (Dry)","Masala Chaap","Paneer Sizzler","Paneer Malai Tikka","Shahi Kofta"];
-const PASS="DevBhoj@2026",MK="db_menu",SK="db_specials",RK="db_reviews";
-let menuData=[],nextId=1000,adminFilter="",menuBuilt=false,selStar=0;
+const PASS="DevBhoj@2026", MK="db_menu", SK="db_specials", RK="db_reviews";
+let menuData=[], nextId=1000, adminFilter="", menuBuilt=false, selStar=0;
 
-function getMenu(){const d=localStorage.getItem(MK);if(d)return JSON.parse(d);const def=[];CATS_DATA.forEach(c=>c.items.forEach(([n,p])=>def.push({id:nextId++,name:n,price:p,cat:c.name,popular:POP_DEF.includes(n)})));return def;}
-function saveMenu(d){localStorage.setItem(MK,JSON.stringify(d));}
-function getSpecials(){const d=localStorage.getItem(SK);return d?JSON.parse(d):[{id:1,name:"Dal Makhani",price:"200",desc:"Slow cooked black lentils"},{id:2,name:"Kadhai Paneer",price:"260",desc:"Fresh paneer in kadhai masala"},{id:3,name:"Malai Chaap",price:"290",desc:"Creamy malai marinated chaap"},{id:4,name:"Rasgulla",price:"50",desc:"Soft spongy sweet"},{id:5,name:"Cold Coffee with Ice Cream",price:"170",desc:"Chilled coffee with ice cream"},{id:6,name:"Mexican Pizza",price:"190",desc:"Zesty Mexican pizza"}];}
-function saveSpecials(d){localStorage.setItem(SK,JSON.stringify(d));}
-function getReviews(){const d=localStorage.getItem(RK);return d?JSON.parse(d):[];}
-function saveReviews(d){localStorage.setItem(RK,JSON.stringify(d));}
+function getMenu(){
+    const d = localStorage.getItem(MK);
+    if(d) return JSON.parse(d);
+    const def=[];
+    CATS_DATA.forEach(c=>c.items.forEach(([n,p])=>def.push({id:nextId++, name:n, price:p, cat:c.name, popular:POP_DEF.includes(n)})));
+    return def;
+}
 
+function saveMenu(d){
+    localStorage.setItem(MK, JSON.stringify(d));
+    syncDataToGitHub(); // Triggers auto-deployment directly to Git
+}
+
+function getSpecials(){
+    const d=localStorage.getItem(SK);
+    return d ? JSON.parse(d) : [{id:1,name:"Dal Makhani",price:"200",desc:"Slow cooked black lentils"},{id:2,name:"Kadhai Paneer",price:"260",desc:"Fresh paneer in kadhai masala"},{id:3,name:"Malai Chaap",price:"290",desc:"Creamy malai marinated chaap"},{id:4,name:"Rasgulla",price:"50",desc:"Soft spongy sweet"},{id:5,name:"Cold Coffee with Ice Cream",price:"170",desc:"Chilled coffee with ice cream"},{id:6,name:"Mexican Pizza",price:"190",desc:"Zesty Mexican pizza"}];
+}
+
+function saveSpecials(d){
+    localStorage.setItem(SK, JSON.stringify(d));
+    syncDataToGitHub();
+}
+
+function getReviews(){
+    const d=localStorage.getItem(RK);
+    return d ? JSON.parse(d) : [];
+}
+
+function saveReviews(d){
+    localStorage.setItem(RK, JSON.stringify(d));
+    syncDataToGitHub();
+}
+
+// --- AUTOMATED GITHUB SYNC FUNCTION ---
+async function syncDataToGitHub() {
+    try {
+        // 1. Fetch the existing full file from the repository
+        const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+            headers: { Authorization: `Bearer ${GITHUB_CONFIG.token}` }
+        });
+        if (!getResponse.ok) throw new Error("Failed to fetch repository file structure.");
+        
+        const fileData = await getResponse.json();
+        const sha = fileData.sha;
+        
+        // 2. Decode current file content from Base64 to string
+        let currentHtml = decodeURIComponent(escape(atob(fileData.content)));
+        
+        // 3. Programmatically serialize and inject your new CATS_DATA array into the HTML string
+        const serializedCatsData = JSON.stringify(CATS_DATA, null, 2);
+        // This regex looks for the const CATS_DATA=[...] block in the file and updates it cleanly
+        currentHtml = currentHtml.replace(/const CATS_DATA=\[[\s\S]*?\];/m, `const CATS_DATA=${serializedCatsData};`);
+
+        // 4. Re-encode updated file content to Base64
+        const encodedContent = btoa(unescape(encodeURIComponent(currentHtml)));
+
+        // 5. Commit changes back to GitHub (triggers Netlify auto-deployment)
+        const updateResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${GITHUB_CONFIG.token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                message: `Admin Update: Menu items, specials, or reviews updated on ${new Date().toLocaleString()}`,
+                content: encodedContent,
+                sha: sha
+            }),
+        });
+
+        if (updateResponse.ok) {
+            console.log("Changes successfully synced to GitHub & redeployment triggered.");
+        } else {
+            console.error("GitHub update payload rejected.");
+        }
+    } catch (err) {
+        console.error("Sync error:", err);
+    }
+}
+
+// --- EXISTING CONTROLS & LIFECYCLE ROUTINES ---
 function showPage(page,cat){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(page+"Page").classList.add("active");
@@ -1057,7 +1141,7 @@ function renderRevList(){
 function openReservation(){document.getElementById("reservationPopup").classList.add("open");}
 function openReviewPopup(){document.getElementById("reviewPopup").classList.add("open");}
 function closePopup(id){document.getElementById(id).classList.remove("open");}
-document.querySelectorAll(".popup-overlay").forEach(p=>p.addEventListener("click",e=>{if(e.target===p)p.classList.remove("open");}));
+document.querySelectorAll(".popup-overlay").forEach(p=>p.addEventListener("click, e=>{if(e.target===p)p.classList.remove("open");}));
 function selectGuests(btn,val){document.querySelectorAll(".guest-btn").forEach(b=>b.classList.remove("selected"));btn.classList.add("selected");document.getElementById("resGuests").value=val;}
 function submitReservation(){
   const name=document.getElementById("resName").value.trim(),phone=document.getElementById("resPhone").value.trim(),date=document.getElementById("resDate").value,time=document.getElementById("resTime").value,guests=document.getElementById("resGuests").value,req=document.getElementById("resReq").value.trim();
